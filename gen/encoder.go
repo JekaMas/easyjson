@@ -49,11 +49,12 @@ var primitiveStringEncoders = map[reflect.Kind]string{
 type fieldTags struct {
 	name string
 
-	omit        bool
-	omitEmpty   bool
-	noOmitEmpty bool
-	asString    bool
-	required    bool
+	omit          bool
+	omitEmpty     bool
+	noOmitEmpty   bool
+	asString      bool
+	required      bool
+	includeFields bool
 }
 
 // parseFieldTags parses the json field tag into a structure.
@@ -62,6 +63,8 @@ func parseFieldTags(f reflect.StructField) fieldTags {
 
 	for i, s := range strings.Split(f.Tag.Get("json"), ",") {
 		switch {
+		case s == "include-fields":
+			ret.includeFields = true
 		case i == 0 && s == "-":
 			ret.omit = true
 		case i == 0:
@@ -254,11 +257,29 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	if tags.omit {
 		return nil
 	}
+	if tags.includeFields {
+		return nil
+	}
+
+	fmt.Fprintln(g.out, "  isIncluded = false")
+	fmt.Fprintln(g.out, "  if len(includeFields) == 0 {")
+	fmt.Fprintln(g.out, "      isIncluded = true")
+	fmt.Fprintln(g.out, "  } else {")
+	fmt.Fprintln(g.out, "    if _, ok := includeFields["+strconv.Quote(jsonName)+"]; ok {")
+	fmt.Fprintln(g.out, "        isIncluded = true")
+	fmt.Fprintln(g.out, "    }")
+	fmt.Fprintln(g.out, "  }")
+
+	fmt.Fprintln(g.out, "  if isIncluded {")
+
 	if !tags.omitEmpty && !g.omitEmpty || tags.noOmitEmpty {
 		fmt.Fprintln(g.out, "  if !first { out.RawByte(',') }")
 		fmt.Fprintln(g.out, "  first = false")
 		fmt.Fprintf(g.out, "  out.RawString(%q)\n", strconv.Quote(jsonName)+":")
-		return g.genTypeEncoder(f.Type, "in."+f.Name, tags, 1)
+
+		err := g.genTypeEncoder(f.Type, "in."+f.Name, tags, 1)
+		fmt.Fprintln(g.out, "  }")
+		return err
 	}
 
 	fmt.Fprintln(g.out, "  if", g.notEmptyCheck(f.Type, "in."+f.Name), "{")
@@ -269,6 +290,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	if err := g.genTypeEncoder(f.Type, "in."+f.Name, tags, 2); err != nil {
 		return err
 	}
+	fmt.Fprintln(g.out, "  }")
 	fmt.Fprintln(g.out, "  }")
 	return nil
 }
@@ -318,6 +340,21 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 	if err != nil {
 		return fmt.Errorf("cannot generate encoder for %v: %v", t, err)
 	}
+
+	fmt.Fprintln(g.out, "  var includeFields = make(map[string]struct{})")
+	fmt.Fprintln(g.out, "  var isIncluded bool")
+	for _, f := range fs {
+		tags := parseFieldTags(f)
+
+		if tags.includeFields {
+			fmt.Fprintln(g.out, "  if "+g.notEmptyCheck(f.Type, "in."+f.Name)+" {")
+			fmt.Fprintln(g.out, "    for _, field := range in."+f.Name+" {")
+			fmt.Fprintln(g.out, "      includeFields[field] = struct{}{}")
+			fmt.Fprintln(g.out, "    }")
+			fmt.Fprintln(g.out, "  }")
+		}
+	}
+
 	for _, f := range fs {
 		if err := g.genStructFieldEncoder(t, f); err != nil {
 			return err

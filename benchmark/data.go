@@ -17,9 +17,9 @@ func init() {
 
 var smallStructText = []byte(`{"hashtags":[{"indices":[5, 10],"text":"some-text"}],"urls":[],"user_mentions":[]}`)
 var smallStructData = Entities{
-	Hashtags:     []Hashtag{{Indices: []int{5, 10}, Text: "some-text"}},
-	Urls:         []*string{},
-	UserMentions: []*string{},
+	Hashtags:      []Hashtag{{Indices: []int{5, 10}, Text: "some-text"}},
+	Urls:          []*string{},
+	UserMentions:  []*string{},
 }
 
 type SearchMetadata struct {
@@ -41,9 +41,9 @@ type Hashtag struct {
 
 //easyjson:json
 type Entities struct {
-	Hashtags     []Hashtag `json:"hashtags"`
-	Urls         []*string `json:"urls"`
-	UserMentions []*string `json:"user_mentions"`
+	Hashtags      []Hashtag `json:"hashtags"`
+	Urls          []*string `json:"urls"`
+	UserMentions  []*string `json:"user_mentions"`
 }
 
 type UserEntityDescription struct {
@@ -144,5 +144,7 @@ type LargeStruct struct {
 
 //easyjson:json
 type XLStruct struct {
-	Data []LargeStruct
+	Data          []LargeStruct
+	SomeInt       int
+	IncludeFields []string `json:"include-fields"`
 }

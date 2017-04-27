@@ -692,3 +692,10 @@ type EmbeddedStruct struct {
 
 var structWithInterfaceString = `{"f1":1,"f2":{"f1":11,"f2":"22"},"f3":"3"}`
 var structWithInterfaceValueFilled = StructWithInterface{1, &EmbeddedStruct{11, "22"}, "3"}
+
+//easyjson:json
+type ExcludeFields struct{
+	Int1 int
+	Int2 int
+	IncludeFields []string `json:"include-fields"`
+}

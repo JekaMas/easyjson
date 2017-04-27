@@ -1,7 +1,7 @@
 package tests
 
 import (
-	".."
+	"github.com/JekaMas/easyjson"
 	"bytes"
 	"testing"
 )

@@ -165,8 +165,8 @@ func TestEncodingFlags(t *testing.T) {
 		In    easyjson.Marshaler
 		Want  string
 	}{
-		{0, EncodingFlagsTestMap{}, `{"F":null}`},
-		{0, EncodingFlagsTestSlice{}, `{"F":null}`},
+		{0, EncodingFlagsTestMap{}, `{"F":{}}`},
+		{0, EncodingFlagsTestSlice{}, `{"F":[]}`},
 		{jwriter.NilMapAsEmpty, EncodingFlagsTestMap{}, `{"F":{}}`},
 		{jwriter.NilSliceAsEmpty, EncodingFlagsTestSlice{}, `{"F":[]}`},
 	} {

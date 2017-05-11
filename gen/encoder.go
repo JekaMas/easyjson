@@ -15,6 +15,10 @@ func (g *Generator) getEncoderName(t reflect.Type) string {
 	return g.functionName("encode", t)
 }
 
+func (g *Generator) getMapperName(t reflect.Type) string {
+	return g.functionName("Mapper", t)
+}
+
 var primitiveEncoders = map[reflect.Kind]string{
 	reflect.String:  "out.String(string(%v))",
 	reflect.Bool:    "out.Bool(bool(%v))",
@@ -261,12 +265,16 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 		return nil
 	}
 
+	mapperName := g.getMapperName(t)
+
 	fmt.Fprintln(g.out, "  isIncluded = false")
-	fmt.Fprintln(g.out, "  if includeFields.Len() == 0 {")
+	fmt.Fprintln(g.out, "  if includeFieldsLen == 0 {")
 	fmt.Fprintln(g.out, "    isIncluded = true")
 	fmt.Fprintln(g.out, "  } else {")
 
-	fmt.Fprintln(g.out, "    if ok := includeFields.Exists(jlexer.GetHash("+stringAsBytes(jsonName)+")); ok {")
+
+	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(jsonName)+"]")
+	fmt.Fprintln(g.out, "    if ok && includeFields[idx] != nil {")
 	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")
 	fmt.Fprintln(g.out, "  }")
@@ -331,26 +339,44 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 
 	fname := g.getEncoderName(t)
 	typ := g.getType(t)
-
-	fmt.Fprintln(g.out, "func "+fname+"(out *jwriter.Writer, in "+typ+") {")
-	fmt.Fprintln(g.out, "  out.RawByte('{')")
-	fmt.Fprintln(g.out, "  first := true")
-	fmt.Fprintln(g.out, "  _ = first")
+	mapperName := g.getMapperName(t)
 
 	fs, err := getStructFields(t)
 	if err != nil {
 		return fmt.Errorf("cannot generate encoder for %v: %v", t, err)
 	}
 
-	fmt.Fprintln(g.out, "  var includeFields = jlexer.NewFastHashMap("+strconv.Itoa(len(fs))+")")
+	fmt.Fprint(g.out, "var "+mapperName+" = map[string]int{")
+	for i, f := range fs {
+		if i != 0 {
+			fmt.Fprint(g.out, ",")
+		}
+		fmt.Fprint(g.out, strconv.Quote(f.Name)+":"+strconv.Itoa(i))
+	}
+	fmt.Fprintln(g.out, "}")
+
+	fmt.Fprintln(g.out, "func "+fname+"(out *jwriter.Writer, in "+typ+") {")
+	fmt.Fprintln(g.out, "  out.RawByte('{')")
+	fmt.Fprintln(g.out, "  first := true")
+	fmt.Fprintln(g.out, "  _ = first")
+
+
+	fmt.Fprintln(g.out, "  var includeFields = ["+strconv.Itoa(len(fs))+"]*struct{}{}")
+	fmt.Fprintln(g.out, "  var includeFieldsLen int")
 	fmt.Fprintln(g.out, "  var isIncluded bool")
 	for _, f := range fs {
 		tags := parseFieldTags(f)
 
 		if tags.includeFields {
 			fmt.Fprintln(g.out, "  if "+g.notEmptyCheck(f.Type, "in."+f.Name)+" {")
+			fmt.Fprintln(g.out, "    t := struct{}{}")
+			fmt.Fprintln(g.out, "    idx := 0")
+			fmt.Fprintln(g.out, "    ok := false")
 			fmt.Fprintln(g.out, "    for _, name := range in."+f.Name+" {")
-			fmt.Fprintln(g.out, "      includeFields.Set(jlexer.GetHashString(name), 1)")
+			fmt.Fprintln(g.out, "      if idx, ok = "+mapperName+"[name]; ok {")
+			fmt.Fprintln(g.out, "        includeFields[idx] = &t")
+			fmt.Fprintln(g.out, "        includeFieldsLen++")
+			fmt.Fprintln(g.out, "      }")
 			fmt.Fprintln(g.out, "    }")
 			fmt.Fprintln(g.out, "  }")
 		}

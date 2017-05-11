@@ -266,7 +266,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	fmt.Fprintln(g.out, "    isIncluded = true")
 	fmt.Fprintln(g.out, "  } else {")
 
-	fmt.Fprintln(g.out, "    if ok := includeFields.Exists(jlexer.GetHashString("+strconv.Quote(jsonName)+")); ok {")
+	fmt.Fprintln(g.out, "    if ok := includeFields.Exists(jlexer.GetHash("+stringAsBytes(jsonName)+")); ok {")
 	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")
 	fmt.Fprintln(g.out, "  }")
@@ -342,7 +342,7 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 		return fmt.Errorf("cannot generate encoder for %v: %v", t, err)
 	}
 
-	fmt.Fprintln(g.out, "  var includeFields = fastinteger.New("+strconv.Itoa(len(fs))+")")
+	fmt.Fprintln(g.out, "  var includeFields = jlexer.NewFastHashMap("+strconv.Itoa(len(fs))+")")
 	fmt.Fprintln(g.out, "  var isIncluded bool")
 	for _, f := range fs {
 		tags := parseFieldTags(f)

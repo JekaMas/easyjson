@@ -297,10 +297,10 @@ var structsString = "{" +
 	`"SubNil":null,` +
 
 	`"SubSlice":[{"Value":"s1","Value2":""},{"Value":"s2","Value2":""}],` +
-	`"SubSliceNil":null,` +
+	`"SubSliceNil":[],` +
 
 	`"SubPtrSlice":[{"Value":"p1","Value2":""},{"Value":"p2","Value2":""}],` +
-	`"SubPtrSliceNil":null,` +
+	`"SubPtrSliceNil":[],` +
 
 	`"SubA1":{"Value":"test3","Value2":"v3"},` +
 	`"SubA2":{"Value":"test4","Value2":"v4"},` +
@@ -486,7 +486,7 @@ var sliceString = `{` +
 	`"NilByteSlice":null,` +
 	`"IntSlice":[1,2,3,4,5],` +
 	`"EmptyIntSlice":[],` +
-	`"NilIntSlice":null` +
+	`"NilIntSlice":[]` +
 	`}`
 
 type Arrays struct {
@@ -549,7 +549,7 @@ var mapsValue = Maps{
 var mapsString = `{` +
 	`"Map":{"A":"b"},` +
 	`"InterfaceMap":{"G":1},` +
-	`"NilMap":null,` +
+	`"NilMap":{},` +
 	`"CustomMap":{"c":"d"}` +
 	`}`
 
@@ -625,7 +625,7 @@ var deepNestString = `{` +
 	`"testSliceMap":["0","1"]` +
 	`},` +
 	`"SliceMap1":{` +
-	`"testSliceMap1":null` +
+	`"testSliceMap1":[]` +
 	`},` +
 	`"SliceMap2":{` +
 	`"testSliceMap2":[]` +

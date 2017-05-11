@@ -262,15 +262,12 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	}
 
 	fmt.Fprintln(g.out, "  isIncluded = false")
-	fmt.Fprintln(g.out, "  if len(includeFields) == 0 {")
+	fmt.Fprintln(g.out, "  if includeFields.Len() == 0 {")
 	fmt.Fprintln(g.out, "    isIncluded = true")
 	fmt.Fprintln(g.out, "  } else {")
 
-	fmt.Fprintln(g.out, "    for i, includeField := range includeFields {")
-	fmt.Fprintln(g.out, "      if includeField == "+strconv.Quote(jsonName)+" {")
-	fmt.Fprintln(g.out, "        isIncluded = true")
-	fmt.Fprintln(g.out, "        break")
-	fmt.Fprintln(g.out, "      }")
+	fmt.Fprintln(g.out, "    if ok := includeFields.Exists(jlexer.GetHashString("+strconv.Quote(jsonName)+")); ok {")
+	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")
 	fmt.Fprintln(g.out, "  }")
 
@@ -345,14 +342,16 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 		return fmt.Errorf("cannot generate encoder for %v: %v", t, err)
 	}
 
-	fmt.Fprintln(g.out, "  var includeFields = make([]string, 0, 10)")
+	fmt.Fprintln(g.out, "  var includeFields = fastinteger.New("+strconv.Itoa(len(fs))+")")
 	fmt.Fprintln(g.out, "  var isIncluded bool")
 	for _, f := range fs {
 		tags := parseFieldTags(f)
 
 		if tags.includeFields {
 			fmt.Fprintln(g.out, "  if "+g.notEmptyCheck(f.Type, "in."+f.Name)+" {")
-			fmt.Fprintln(g.out, "    includeFields = in."+f.Name)
+			fmt.Fprintln(g.out, "    for _, name := range in."+f.Name+" {")
+			fmt.Fprintln(g.out, "      includeFields.Set(jlexer.GetHashString(name), 1)")
+			fmt.Fprintln(g.out, "    }")
 			fmt.Fprintln(g.out, "  }")
 		}
 	}

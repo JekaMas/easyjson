@@ -274,7 +274,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 
 
 	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(jsonName)+"]")
-	fmt.Fprintln(g.out, "    if ok && includeFields[idx] != nil {")
+	fmt.Fprintln(g.out, "    if ok && includeFields[idx] {")
 	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")
 	fmt.Fprintln(g.out, "  }")
@@ -361,7 +361,7 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 	fmt.Fprintln(g.out, "  _ = first")
 
 
-	fmt.Fprintln(g.out, "  var includeFields = ["+strconv.Itoa(len(fs))+"]*struct{}{}")
+	fmt.Fprintln(g.out, "  var includeFields = ["+strconv.Itoa(len(fs))+"]bool{}")
 	fmt.Fprintln(g.out, "  var includeFieldsLen int")
 	fmt.Fprintln(g.out, "  var isIncluded bool")
 	for _, f := range fs {
@@ -369,12 +369,11 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 
 		if tags.includeFields {
 			fmt.Fprintln(g.out, "  if "+g.notEmptyCheck(f.Type, "in."+f.Name)+" {")
-			fmt.Fprintln(g.out, "    t := struct{}{}")
 			fmt.Fprintln(g.out, "    idx := 0")
 			fmt.Fprintln(g.out, "    ok := false")
 			fmt.Fprintln(g.out, "    for _, name := range in."+f.Name+" {")
 			fmt.Fprintln(g.out, "      if idx, ok = "+mapperName+"[name]; ok {")
-			fmt.Fprintln(g.out, "        includeFields[idx] = &t")
+			fmt.Fprintln(g.out, "        includeFields[idx] = true")
 			fmt.Fprintln(g.out, "        includeFieldsLen++")
 			fmt.Fprintln(g.out, "      }")
 			fmt.Fprintln(g.out, "    }")

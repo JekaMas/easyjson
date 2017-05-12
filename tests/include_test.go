@@ -7,7 +7,7 @@ import (
 )
 
 func TestIncludeFields(t *testing.T) {
-	n := ExcludeFields{1, 2, []string{"int2"}}
+	n := ExcludeFields{1, 2, []string{"Int2"}}
 
 	res, err := easyjson.Marshal(n)
 	if err != nil {
@@ -21,7 +21,7 @@ func TestIncludeFields(t *testing.T) {
 }
 
 func TestIncludeFields_FirstField(t *testing.T) {
-	n := ExcludeFields{1, 2, []string{"int1"}}
+	n := ExcludeFields{1, 2, []string{"Int1"}}
 
 	res, err := easyjson.Marshal(n)
 	if err != nil {
@@ -49,7 +49,7 @@ func TestIncludeFields_All_EmptyIncludeFields(t *testing.T) {
 }
 
 func TestIncludeFields_All_AllFields(t *testing.T) {
-	n := ExcludeFields{1, 2, []string{"int1", "int2"}}
+	n := ExcludeFields{1, 2, []string{"Int1", "Int2"}}
 
 	res, err := easyjson.Marshal(n)
 	if err != nil {

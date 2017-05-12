@@ -255,9 +255,7 @@ func (g *Generator) notEmptyCheck(t reflect.Type, v string) string {
 }
 
 func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField) error {
-	jsonName := g.fieldNamer.GetJSONFieldName(t, f)
 	tags := parseFieldTags(f)
-
 	if tags.omit {
 		return nil
 	}
@@ -265,6 +263,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 		return nil
 	}
 
+	jsonName := g.fieldNamer.GetJSONFieldName(t, f)
 	mapperName := g.getMapperName(t)
 
 	fmt.Fprintln(g.out, "  isIncluded = false")
@@ -272,8 +271,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	fmt.Fprintln(g.out, "    isIncluded = true")
 	fmt.Fprintln(g.out, "  } else {")
 
-
-	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(strings.ToLower(jsonName))+"]")
+	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(jsonName)+"]")
 	fmt.Fprintln(g.out, "    if ok && includeFields[idx] {")
 	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")
@@ -347,11 +345,23 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 	}
 
 	fmt.Fprint(g.out, "var "+mapperName+" = map[string]int{")
+	n := 0
 	for i, f := range fs {
-		if i != 0 {
+		tags := parseFieldTags(f)
+		if tags.omit {
+			continue
+		}
+		if tags.includeFields {
+			continue
+		}
+
+		if n != 0 {
 			fmt.Fprint(g.out, ",")
 		}
-		fmt.Fprint(g.out, strconv.Quote(strings.ToLower(f.Name))+":"+strconv.Itoa(i))
+
+		tag := g.fieldNamer.GetJSONFieldName(t, f)
+		fmt.Fprint(g.out, strconv.Quote(tag)+":"+strconv.Itoa(i))
+		n++
 	}
 	fmt.Fprintln(g.out, "}")
 
@@ -359,7 +369,6 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 	fmt.Fprintln(g.out, "  out.RawByte('{')")
 	fmt.Fprintln(g.out, "  first := true")
 	fmt.Fprintln(g.out, "  _ = first")
-
 
 	fmt.Fprintln(g.out, "  var includeFields = ["+strconv.Itoa(len(fs))+"]bool{}")
 	fmt.Fprintln(g.out, "  var includeFieldsLen int")

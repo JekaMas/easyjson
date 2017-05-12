@@ -273,7 +273,7 @@ func (g *Generator) genStructFieldEncoder(t reflect.Type, f reflect.StructField)
 	fmt.Fprintln(g.out, "  } else {")
 
 
-	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(jsonName)+"]")
+	fmt.Fprintln(g.out, "    idx, ok := "+mapperName+"["+strconv.Quote(strings.ToLower(jsonName))+"]")
 	fmt.Fprintln(g.out, "    if ok && includeFields[idx] {")
 	fmt.Fprintln(g.out, "      isIncluded = true")
 	fmt.Fprintln(g.out, "    }")

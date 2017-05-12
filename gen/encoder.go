@@ -351,7 +351,7 @@ func (g *Generator) genStructEncoder(t reflect.Type) error {
 		if i != 0 {
 			fmt.Fprint(g.out, ",")
 		}
-		fmt.Fprint(g.out, strconv.Quote(f.Name)+":"+strconv.Itoa(i))
+		fmt.Fprint(g.out, strconv.Quote(strings.ToLower(f.Name))+":"+strconv.Itoa(i))
 	}
 	fmt.Fprintln(g.out, "}")
 
